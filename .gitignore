@@ -1,0 +1,15 @@
+# Ignore Python virtual environment
+.venv/
+
+# Ignore model files and large binaries
+*.keras
+*.h5
+*.pyd
+*.dll
+*.mp4
+*.avi
+*.mov
+
+# Ignore system files
+*.DS_Store
+Thumbs.db
