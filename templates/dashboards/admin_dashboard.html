@@ -1,0 +1,131 @@
+{% extends 'base.html' %}
+{% block title %}Admin Dashboard - MediScanIQ{% endblock %}
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-10 offset-md-1">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h3 class="mb-0">Admin Dashboard</h3>
+                </div>
+                <div class="card-body">
+                    <h4 class="text-center mb-4">Welcome, Admin {{ session.username }}!</h4>
+                    <div id="loading-spinner" class="text-center">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                    </div>
+                    <div id="admin-results" class="mt-4"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function loadAdminResults() {
+        const spinner = document.getElementById('loading-spinner');
+        const resultsContainer = document.getElementById('admin-results');
+        
+        spinner.style.display = 'block';
+        resultsContainer.innerHTML = '';
+
+        fetch('/admin/results')
+            .then(response => {
+                spinner.style.display = 'none';
+                if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                return response.json();
+            })
+            .then(results => {
+                if (results.error) {
+                    resultsContainer.innerHTML = `
+                        <div class="alert alert-danger">
+                            Error: ${results.error}
+                        </div>
+                    `;
+                    return;
+                }
+
+                if (results.length === 0) {
+                    resultsContainer.innerHTML = `
+                        <div class="alert alert-info">
+                            No diagnoses found in the system
+                        </div>
+                    `;
+                    return;
+                }
+
+                results.forEach(result => {
+                    const resultHtml = `
+                        <div class="card mb-3">
+                            <div class="card-body">
+                                <h5 class="card-title">
+                                    ${result.diagnosis} 
+                                    <span class="badge bg-primary">${(result.confidence * 100).toFixed(2)}%</span>
+                                </h5>
+                                <p class="card-text">
+                                    <strong>Doctor:</strong> ${result.created_by}<br>
+                                    <strong>Patient:</strong> ${result.patient_id}<br>
+                                </p>
+                                ${result.heatmap ? `
+                                <div class="mb-3">
+                                    <img src="${result.heatmap}" 
+                                         class="img-fluid rounded" 
+                                         style="max-height: 200px;" 
+                                         alt="Diagnosis heatmap">
+                                </div>` : ''}
+                                <button class="btn btn-danger btn-sm delete-result" 
+                                        data-id="${result.id}">
+                                    Delete Result
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                    resultsContainer.innerHTML += resultHtml;
+                });
+
+                // Add delete handlers
+                document.querySelectorAll('.delete-result').forEach(button => {
+                    button.addEventListener('click', handleDelete);
+                });
+            })
+            .catch(error => {
+                spinner.style.display = 'none';
+                resultsContainer.innerHTML = `
+                    <div class="alert alert-danger">
+                        Failed to load results: ${error.message}
+                    </div>
+                `;
+            });
+    }
+
+    function handleDelete(event) {
+        const id = event.target.dataset.id;
+        if (!confirm(`Delete diagnosis #${id} permanently?`)) return;
+
+        fetch(`/admin/delete_result/${id}`, {
+            method: 'DELETE',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => {
+            if (!response.ok) throw new Error('Delete failed');
+            return response.json();
+        })
+        .then(data => {
+            if (data.success) {
+                loadAdminResults();
+            } else {
+                alert('Delete failed: ' + (data.error || 'Unknown error'));
+            }
+        })
+        .catch(error => {
+            console.error('Delete error:', error);
+            alert('Delete failed: ' + error.message);
+        });
+    }
+
+    window.addEventListener('DOMContentLoaded', loadAdminResults);
+</script>
+{% endblock %}

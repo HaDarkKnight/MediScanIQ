@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block title %}Reset Password{% endblock %}
+{% block content %}
+    <section class="form-section">
+        <h2>Change Password</h2>
+        <form method="POST">
+            <label for="username">Username:</label>
+            <input type="text" id="username" name="username" value="{{ username }}" readonly required>
+
+            <label for="old_password">Old Password:</label>
+            <input type="password" id="old_password" name="old_password" required>
+
+            <label for="new_password">New Password:</label>
+            <input type="password" id="new_password" name="new_password" required>
+
+            <label for="confirm_password">Confirm Password:</label>
+            <input type="password" id="confirm_password" name="confirm_password" required>
+
+            <button type="submit" class="btn">Change Password</button>
+        </form>
+        <p>Back to <a href="{{ url_for('profile') }}">Profile</a></p>
+    </section>
+{% endblock %}

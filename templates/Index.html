@@ -1,0 +1,300 @@
+{% extends 'base.html' %}
+{% block title %}Home - MediScanIQ{% endblock %}
+{% block body_class %}index-page{% endblock %}
+{% block content %}
+{% if 'username' in session %}
+    <!-- Authenticated Users -->
+    <div class="container animated-bg py-5">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1 class="text-primary animate__animated animate__fadeIn">Welcome, {{ session['fname']|default('User') }} {{ session['lname']|default('') }}!</h1>
+            <button class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#promoModal">Watch Promo</button>
+        </div>
+        <p class="text-center lead text-muted animate__animated animate__fadeIn" style="animation-delay: 0.2s;">Your AI-powered medical imaging dashboard.</p>
+
+<!-- Quick Links -->
+<div class="row mb-5 justify-content-center">
+    <div class="col-md-4 mb-4">
+        <div class="card shadow-sm hover-card bg-gradient-primary text-white">
+            <div class="card-body text-center">
+                <i class="fas fa-tachometer-alt fa-3x mb-3"></i>
+                <h5 class="card-title">Dashboard</h5>
+                <p class="card-text">Monitor analytics and patient data.</p>
+                <a href="{{ url_for('dashboard') }}" class="btn btn-light">Go to Dashboard</a>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4 mb-4">
+        <div class="card shadow-sm hover-card bg-gradient-success text-white">
+            <div class="card-body text-center">
+                <i class="fas fa-upload fa-3x mb-3"></i>
+                <h5 class="card-title">Upload X-ray</h5>
+                <p class="card-text">Analyze new X-ray images.</p>
+                <a href="{{ url_for('upload') }}" class="btn btn-light">Upload Now</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+        <!-- Recent Activity -->
+        <h3 class="text-primary mb-3 animate__animated animate__fadeIn">Recent Activity</h3>
+        <div id="activity-feed" class="row">
+            {% if diagnoses %}
+                {% for activity in diagnoses %}
+                    <div class="col-md-6 mb-3">
+                        <div class="card shadow-sm hover-card activity-card animate__animated animate__fadeInUp">
+                            <div class="card-body">
+                                <h6 class="card-title text-primary">{{ activity.diagnosis }}</h6>
+                                <p class="card-text text-muted">
+                                    Confidence: {{ (activity.confidence * 100)|round(2) }}%<br>
+                                    <small>{{ activity.description|truncate(100, true)|default('N/A') }}</small>
+                                </p>
+                                <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#diagnosisModal{{ activity.id }}">View Details</button>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Modal for Diagnosis Details -->
+                    <div class="modal fade" id="diagnosisModal{{ activity.id }}" tabindex="-1" aria-labelledby="diagnosisModalLabel{{ activity.id }}" aria-hidden="true">
+                        <div class="modal-dialog modal-lg">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title" id="diagnosisModalLabel{{ activity.id }}">Diagnosis Details</h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                </div>
+                                <div class="modal-body">
+                                    <p><strong>Diagnosis:</strong> {{ activity.diagnosis }}</p>
+                                    <p><strong>Confidence:</strong> {{ (activity.confidence * 100)|round(2) }}%</p>
+                                    <p><strong>Description:</strong> {{ activity.description|default('N/A') }}</p>
+                                    <p><strong>Treatment:</strong> {{ activity.treatment|default('N/A') }}</p>
+                                    <p><strong>Medicines:</strong> {{ activity.medicines|default('N/A') }}</p>
+                                    {% if activity.xray_image %}
+                                        <p><strong>X-ray Image:</strong> 
+                                            <a href="#" data-bs-toggle="modal" data-bs-target="#imageModal{{ activity.id }}">View Image</a>
+                                        </p>
+                                    {% else %}
+                                        <p><strong>X-ray Image:</strong> N/A</p>
+                                    {% endif %}
+                                    {% if activity.heatmap %}
+                                        <p><strong>Heatmap:</strong> 
+                                            <a href="#" data-bs-toggle="modal" data-bs-target="#heatmapModal{{ activity.id }}">View Heatmap</a>
+                                        </p>
+                                    {% else %}
+                                        <p><strong>Heatmap:</strong> N/A</p>
+                                    {% endif %}
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- X-ray Image Modal -->
+                    {% if activity.xray_image %}
+                        <div class="modal fade" id="imageModal{{ activity.id }}" tabindex="-1" aria-labelledby="imageModalLabel{{ activity.id }}" aria-hidden="true">
+                            <div class="modal-dialog modal-lg">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <h5 class="modal-title" id="imageModalLabel{{ activity.id }}">X-ray Image</h5>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                    </div>
+                                    <div class="modal-body">
+                                        <img src="{{ url_for('static', filename=activity.xray_image.lstrip('/')) }}" class="img-fluid" alt="X-ray Image for {{ activity.diagnosis }}">
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    {% endif %}
+                    <!-- Heatmap Modal -->
+                    {% if activity.heatmap %}
+                        <div class="modal fade" id="heatmapModal{{ activity.id }}" tabindex="-1" aria-labelledby="heatmapModalLabel{{ activity.id }}" aria-hidden="true">
+                            <div class="modal-dialog modal-lg">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <h5 class="modal-title" id="heatmapModalLabel{{ activity.id }}">Heatmap</h5>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal">Close</button>
+                                    </div>
+                                    <div class="modal-body">
+                                        <img src="{{ url_for('static', filename=activity.heatmap.lstrip('/')) }}" class="img-fluid" alt="Heatmap for {{ activity.diagnosis }}">
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    {% endif %}
+                {% endfor %}
+            {% else %}
+                <div class="col-12 text-center">
+                    <p class="text-muted">No recent activities. <a href="{{ url_for('upload') }}" class="text-orange">Upload an X-ray</a> to get started.</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+{% else %}
+    <!-- Unauthenticated Users -->
+    <div class="hero parallax" style="background-image: url('/static/images/hero-bg.jpg');">
+        <div class="overlay"></div>
+        <div class="content text-center text-white animate__animated animate__zoomIn">
+            <h1 class="display-3 fw-bold">MediScanIQ: Revolutionizing Healthcare</h1>
+            <p class="lead mb-4">Experience AI-driven X-ray analysis, secure patient management, and seamless collaboration.</p>
+            <div class="d-flex justify-content-center gap-3">
+                <a href="{{ url_for('signup') }}" class="btn btn-primary btn-lg">Start Free Trial</a>
+                <button class="btn btn-outline-light btn-lg" data-bs-toggle="modal" data-bs-target="#promoModal">Watch Promo</button>
+                <a href="#features" class="btn btn-outline-light btn-lg">Discover More</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Stats Section -->
+    <section class="stats py-5 bg-light">
+        <div class="container">
+            <div class="row text-center">
+                <div class="col-md-4 mb-4">
+                    <h2 class="counter" data-target="30000">0</h2>
+                    <p>X-rays Analyzed</p>
+                </div>
+                <div class="col-md-4 mb-4">
+                    <h2 class="counter" data-target="5000">0</h2>
+                    <p>Doctors Onboard</p>
+                </div>
+                <div class="col-md-4 mb-4">
+                    <h2 class="counter" data-target="93">0</h2>
+                    <p>Accuracy Rate (%)</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section id="features" class="features py-5">
+        <div class="container">
+            <h2 class="text-center mb-5 text-primary animate__animated animate__fadeInUp">Our Core Features</h2>
+            <div class="row">
+                <div class="col-md-4 mb-4">
+                    <div class="card shadow-sm hover-card">
+                        <div class="card-body text-center">
+                            <i class="fas fa-upload fa-3x mb-3 text-orange"></i>
+                            <h4 class="card-title">Instant Uploads</h4>
+                            <p class="card-text">Upload X-rays from any device and get results in seconds.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4 mb-4">
+                    <div class="card shadow-sm hover-card">
+                        <div class="card-body text-center">
+                            <i class="fas fa-brain fa-3x mb-3 text-green"></i>
+                            <h4 class="card-title">AI Diagnostics</h4>
+                            <p class="card-text">High-precision detection of abnormalities using advanced AI.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4 mb-4">
+                    <div class="card shadow-sm hover-card">
+                        <div class="card-body text-center">
+                            <i class="fas fa-lock fa-3x mb-3 text-purple"></i>
+                            <h4 class="card-title">Secure Platform</h4>
+                            <p class="card-text">End-to-end encryption for patient data privacy.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- About the Project Section -->
+    <section class="about-project bg-gradient-secondary py-5 text-white">
+        <div class="container">
+            <h2 class="text-center mb-5 text-white animate__animated animate__fadeInUp">About MediScanIQ</h2>
+            <div class="row">
+                <div class="col-md-6 mb-4">
+                    <h4 class="text-orange mb-3">AI-Powered Lung Disease Classification</h4>
+                    <p class="lead">MediScanIQ is an innovative AI-powered system designed to assist healthcare professionals in diagnosing lung diseases using chest X-ray images.</p>
+                    <p>Developed by Mohammed Aljammal and Abdullah Abu Fodeh under the supervision of Khalid Alemerien, it leverages a custom CNN to classify images into COVID-19, Normal, Pneumonia, and Tuberculosis.</p>
+                </div>
+                <div class="col-md-6 mb-4">
+                    <h4 class="text-green mb-3">Robust Dataset</h4>
+                    <p class="lead">Trained on a comprehensive dataset from Kaggle, GitHub, and Mendeley Data:</p>
+                    <ul>
+                        <li><strong>Training Set:</strong> 23,320 images</li>
+                        <li><strong>Validation Set:</strong> 3,994 images</li>
+                        <li><strong>Test Set:</strong> 4,658 images</li>
+                    </ul>
+                </div>
+                <div class="col-md-6 mb-4">
+                    <h4 class="text-purple mb-3">Advanced AI Model</h4>
+                    <p class="lead">Custom CNN architecture with:</p>
+                    <ul>
+                        <li><strong>Input:</strong> Grayscale 150x150 pixel images</li>
+                        <li><strong>Layers:</strong> Conv2D, MaxPooling2D, dense layers with dropout</li>
+                        <li><strong>Performance:</strong> 98.21% training, 96.54% validation, 92.98% test accuracy</li>
+                    </ul>
+                </div>
+                <div class="col-md-6 mb-4">
+                    <h4 class="text-orange mb-3">Impact and Vision</h4>
+                    <p class="lead">MediScanIQ streamlines diagnostics, empowering doctors and patients with transparent, interpretable results.</p>
+                    <a href="{{ url_for('signup') }}" class="btn btn-primary mt-3">Join Us Today</a>
+                </div>
+            </div>
+        </div>
+    </section>
+{% endif %}
+
+<!-- Promo Video Modal -->
+<div class="modal fade" id="promoModal" tabindex="-1" aria-labelledby="promoModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="promoModalLabel">MediScanIQ Promo</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <video controls class="w-100 modal-video" aria-label="MediScanIQ promotional video">
+                    <source src="{{ url_for('static', filename='videos/promo-video.mp4') }}" type="video/mp4">
+                    Your browser does not support the video tag.
+                </video>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Counter Animation Script -->
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const counters = document.querySelectorAll('.counter');
+        const speed = 200;
+
+        const animateCounter = (counter) => {
+            const updateCount = () => {
+                const target = +counter.getAttribute('data-target');
+                const count = +counter.innerText;
+                const increment = target / speed;
+                if (count < target) {
+                    counter.innerText = Math.ceil(count + increment);
+                    setTimeout(updateCount, 10);
+                } else {
+                    counter.innerText = target;
+                }
+            };
+            updateCount();
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    animateCounter(entry.target);
+                    observer.unobserve(entry.target);
+                }
+            });
+        }, { threshold: 0.5 });
+
+        counters.forEach(counter => observer.observe(counter));
+    });
+</script>
+{% endblock %}

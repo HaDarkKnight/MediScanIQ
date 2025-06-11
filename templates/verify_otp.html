@@ -1,0 +1,25 @@
+{% extends 'base.html' %}
+{% block title %}Verify OTP - MediScanIQ{% endblock %}
+{% block content %}
+<div class="container main-content py-5">
+    <h1 class="text-primary text-center mb-4 animate__animated animate__fadeIn">Verify OTP</h1>
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <form method="POST" action="{{ url_for('verify_otp') }}">
+                <div class="mb-3">
+                    <label for="username" class="form-label">Username</label>
+                    <input type="text" class="form-control" id="username" name="username" value="{{ username }}" required>
+                </div>
+                <div class="mb-3">
+                    <label for="otp" class="form-label">OTP</label>
+                    <input type="text" class="form-control" id="otp" name="otp" required>
+                </div>
+                <button type="submit" class="btn btn-primary w-100">Verify OTP</button>
+            </form>
+            <p class="text-center mt-3">
+                Back to <a href="{{ url_for('signup') }}" class="text-orange">Sign Up</a>
+            </p>
+        </div>
+    </div>
+</div>
+{% endblock %}

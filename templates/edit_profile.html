@@ -1,0 +1,48 @@
+{% extends 'base.html' %}
+{% block title %}Edit Profile - MediScanIQ{% endblock %}
+{% block content %}
+<div class="container main-content py-5">
+    <h1 class="text-primary mb-4 animate__animated animate__fadeIn">Edit Profile</h1>
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <form method="POST" action="{{ url_for('edit_profile') }}" enctype="multipart/form-data">
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label for="fname" class="form-label">First Name</label>
+                        <input type="text" class="form-control" id="fname" name="fname" value="{{ user.fname }}" required>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label for="lname" class="form-label">Last Name</label>
+                        <input type="text" class="form-control" id="lname" name="lname" value="{{ user.lname }}" required>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label for="email" class="form-label">Email</label>
+                    <input type="email" class="form-control" id="email" name="email" value="{{ user.email }}" required>
+                </div>
+                <div class="mb-3">
+                    <label for="phone" class="form-label">Phone</label>
+                    <input type="text" class="form-control" id="phone" name="phone" value="{{ user.phone }}" required>
+                </div>
+                <div class="mb-3">
+                    <label for="birth_date" class="form-label">Birth Date</label>
+                    <input type="date" class="form-control" id="birth_date" name="birth_date" value="{{ user.birth_date }}" required>
+                </div>
+                {% if user.role == 'doctor' %}
+                    <div class="mb-3">
+                        <label for="doctor_id" class="form-label">Doctor ID</label>
+                        <input type="text" class="form-control" id="doctor_id" name="doctor_id" value="{{ user.doctor_id }}" required>
+                    </div>
+                {% endif %}
+                <div class="mb-3">
+                    <label for="profile_image" class="form-label">Profile Image</label>
+                    <input type="file" class="form-control" id="profile_image" name="profile_image" accept="image/*">
+                    <small class="form-text text-muted">Current: <img src="{{ user.profile_image }}" alt="Current Profile" style="max-width: 50px;"></small>
+                </div>
+                <button type="submit" class="btn btn-primary">Save Changes</button>
+                <a href="{{ url_for('profile') }}" class="btn btn-outline-primary">Cancel</a>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
